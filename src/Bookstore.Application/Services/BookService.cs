@@ -16,6 +16,11 @@ public class BookService : IBookService
 
     public async Task<BookDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
+        if (id == Guid.Empty)
+        {
+            throw new ArgumentException("Book id cannot be empty.", nameof(id));
+        }
+
         var book = await _repository.GetByIdAsync(id, cancellationToken);
         if (book == null) return null;
 
@@ -31,6 +36,16 @@ public class BookService : IBookService
 
     public async Task<IEnumerable<BookDto>> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default)
     {
+        if (page < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(page), page, "Page must be greater than zero.");
+        }
+
+        if (pageSize < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(pageSize), pageSize, "Page size must be greater than zero.");
+        }
+
         var books = await _repository.GetPagedAsync(page, pageSize, cancellationToken);
         return books.Select(book => new BookDto
         {
@@ -68,6 +83,11 @@ public class BookService : IBookService
 
     public async Task<bool> UpdateAsync(Guid id, UpdateBookDto dto, CancellationToken cancellationToken = default)
     {
+        if (id == Guid.Empty)
+        {
+            throw new ArgumentException("Book id cannot be empty.", nameof(id));
+        }
+
         var book = await _repository.GetByIdAsync(id, cancellationToken);
         if (book == null) return false;
 
@@ -82,6 +102,11 @@ public class BookService : IBookService
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
+        if (id == Guid.Empty)
+        {
+            throw new ArgumentException("Book id cannot be empty.", nameof(id));
+        }
+
         var book = await _repository.GetByIdAsync(id, cancellationToken);
         if (book == null) return false;
 

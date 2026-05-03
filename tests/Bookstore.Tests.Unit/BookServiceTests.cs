@@ -51,6 +51,33 @@ public class BookServiceTests
     }
 
     [Fact]
+    public async Task GetByIdAsync_ShouldThrowArgumentException_WhenIdIsEmpty()
+    {
+        Func<Task> act = async () => await _sut.GetByIdAsync(Guid.Empty);
+
+        await act.Should().ThrowAsync<ArgumentException>()
+            .WithParameterName("id");
+    }
+
+    [Fact]
+    public async Task GetPagedAsync_ShouldThrowArgumentOutOfRangeException_WhenPageIsInvalid()
+    {
+        Func<Task> act = async () => await _sut.GetPagedAsync(0, 10);
+
+        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
+            .WithParameterName("page");
+    }
+
+    [Fact]
+    public async Task GetPagedAsync_ShouldThrowArgumentOutOfRangeException_WhenPageSizeIsInvalid()
+    {
+        Func<Task> act = async () => await _sut.GetPagedAsync(1, 0);
+
+        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
+            .WithParameterName("pageSize");
+    }
+
+    [Fact]
     public async Task CreateAsync_ShouldReturnCreatedBookDto()
     {
         // Arrange
@@ -80,6 +107,17 @@ public class BookServiceTests
         // Assert
         result.Should().BeFalse();
         _bookRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<Book>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ShouldThrowArgumentException_WhenIdIsEmpty()
+    {
+        var dto = new UpdateBookDto { Title = "Updated" };
+
+        Func<Task> act = async () => await _sut.UpdateAsync(Guid.Empty, dto);
+
+        await act.Should().ThrowAsync<ArgumentException>()
+            .WithParameterName("id");
     }
 
     [Fact]
@@ -116,6 +154,15 @@ public class BookServiceTests
         // Assert
         result.Should().BeFalse();
         _bookRepositoryMock.Verify(x => x.DeleteAsync(It.IsAny<Book>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldThrowArgumentException_WhenIdIsEmpty()
+    {
+        Func<Task> act = async () => await _sut.DeleteAsync(Guid.Empty);
+
+        await act.Should().ThrowAsync<ArgumentException>()
+            .WithParameterName("id");
     }
 
     [Fact]
