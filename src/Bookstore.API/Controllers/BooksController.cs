@@ -1,0 +1,85 @@
+using Bookstore.Application.DTOs;
+using Bookstore.Application.Interfaces;
+using Bookstore.API.Contracts;
+using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Bookstore.API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class BooksController : ControllerBase
+{
+    private readonly IBookService _bookService;
+    private readonly IValidator<CreateBookDto> _createValidator;
+    private readonly IValidator<UpdateBookDto> _updateValidator;
+
+    public BooksController(
+        IBookService bookService,
+        IValidator<CreateBookDto> createValidator,
+        IValidator<UpdateBookDto> updateValidator)
+    {
+        _bookService = bookService;
+        _createValidator = createValidator;
+        _updateValidator = updateValidator;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetPaged([FromQuery] GetPagedBooksRequest request, CancellationToken cancellationToken = default)
+    {
+        var books = await _bookService.GetPagedAsync(request.Page, request.PageSize, cancellationToken);
+        return Ok(books);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken = default)
+    {
+        if (id == Guid.Empty) return BadRequest();
+
+        var book = await _bookService.GetByIdAsync(id, cancellationToken);
+        if (book == null) return NotFound();
+
+        return Ok(book);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateBookDto dto, CancellationToken cancellationToken = default)
+    {
+        var validationResult = await _createValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(validationResult.Errors);
+        }
+
+        var createdBook = await _bookService.CreateAsync(dto, cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { id = createdBook.Id }, createdBook);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateBookDto dto, CancellationToken cancellationToken = default)
+    {
+        if (id == Guid.Empty) return BadRequest();
+
+        var validationResult = await _updateValidator.ValidateAsync(dto, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(validationResult.Errors);
+        }
+
+        var result = await _bookService.UpdateAsync(id, dto, cancellationToken);
+        if (!result) return NotFound();
+
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken = default)
+    {
+        if (id == Guid.Empty) return BadRequest();
+
+        var result = await _bookService.DeleteAsync(id, cancellationToken);
+        if (!result) return NotFound();
+
+        return NoContent();
+    }
+}
