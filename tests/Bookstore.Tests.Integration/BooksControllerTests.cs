@@ -73,4 +73,44 @@ public class BooksControllerTests : IClassFixture<CustomWebApplicationFactory>
         var getAfterDeleteResponse = await _client.GetAsync($"/api/books/{bookId}");
         getAfterDeleteResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
+
+    [Theory]
+    [InlineData("/api/books?page=0&pageSize=10")]
+    [InlineData("/api/books?page=1&pageSize=0")]
+    public async Task GetPaged_ShouldReturnBadRequest_WhenPagingParametersAreInvalid(string url)
+    {
+        var response = await _client.GetAsync(url);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Theory]
+    [InlineData("/api/books/00000000-0000-0000-0000-000000000000")]
+    [InlineData("/api/books/00000000-0000-0000-0000-000000000000", true)]
+    public async Task InvalidEmptyId_ShouldReturnBadRequest(string url, bool useDelete = false)
+    {
+        var response = useDelete
+            ? await _client.DeleteAsync(url)
+            : await _client.GetAsync(url);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Update_ShouldReturnBadRequest_WhenIdIsEmpty()
+    {
+        var updateDto = new UpdateBookDto
+        {
+            Title = "Updated Book Title",
+            Author = "Test Author",
+            Price = 25.00m,
+            PublishedDate = DateTime.UtcNow
+        };
+
+        var response = await _client.PutAsJsonAsync(
+            "/api/books/00000000-0000-0000-0000-000000000000",
+            updateDto);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
 }

@@ -1,5 +1,6 @@
 using Bookstore.Application.DTOs;
 using Bookstore.Application.Interfaces;
+using Bookstore.API.Contracts;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
@@ -24,18 +25,17 @@ public class BooksController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetPaged([FromQuery] int page = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetPaged([FromQuery] GetPagedBooksRequest request, CancellationToken cancellationToken = default)
     {
-        if (page < 1) page = 1;
-        if (pageSize < 1) pageSize = 10;
-        
-        var books = await _bookService.GetPagedAsync(page, pageSize, cancellationToken);
+        var books = await _bookService.GetPagedAsync(request.Page, request.PageSize, cancellationToken);
         return Ok(books);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken = default)
     {
+        if (id == Guid.Empty) return BadRequest();
+
         var book = await _bookService.GetByIdAsync(id, cancellationToken);
         if (book == null) return NotFound();
 
@@ -58,6 +58,8 @@ public class BooksController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateBookDto dto, CancellationToken cancellationToken = default)
     {
+        if (id == Guid.Empty) return BadRequest();
+
         var validationResult = await _updateValidator.ValidateAsync(dto, cancellationToken);
         if (!validationResult.IsValid)
         {
@@ -73,6 +75,8 @@ public class BooksController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken = default)
     {
+        if (id == Guid.Empty) return BadRequest();
+
         var result = await _bookService.DeleteAsync(id, cancellationToken);
         if (!result) return NotFound();
 
